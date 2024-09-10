@@ -68,7 +68,7 @@ fn integration_with_dprint_ts_snapshot() {
     }
 
     glob!(
-        "integration/**/*.{html,vue,svelte,astro,jinja,njk,vto}",
+        "integration/**/*.{html,vue,san,svelte,astro,jinja,njk,vto}",
         |path| {
             let input = fs::read_to_string(path).unwrap();
             let output = format_with_dprint_ts(&input, path)
@@ -151,7 +151,7 @@ fn integration_with_biome_snapshot() {
     }
 
     glob!(
-        "integration/**/*.{html,vue,svelte,astro,jinja,njk,vto}",
+        "integration/**/*.{html,vue,san,svelte,astro,jinja,njk,vto}",
         |path| {
             let file_name = path.file_name().and_then(|file_name| file_name.to_str());
             if let Some("return.astro") = file_name {

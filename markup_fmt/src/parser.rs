@@ -19,6 +19,7 @@ use std::{cmp::Ordering, iter::Peekable, ops::ControlFlow, str::CharIndices};
 pub enum Language {
     Html,
     Vue,
+    San,
     Svelte,
     Astro,
     Angular,
@@ -629,7 +630,7 @@ impl<'s> Parser<'s> {
 
     fn parse_attr(&mut self) -> PResult<Attribute<'s>> {
         match self.language {
-            Language::Html | Language::Angular => self.parse_native_attr().map(Attribute::Native),
+            Language::Html | Language::San | Language::Angular => self.parse_native_attr().map(Attribute::Native),
             Language::Vue => self
                 .try_parse(Parser::parse_vue_directive)
                 .map(Attribute::VueDirective)
@@ -668,7 +669,7 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_attr_name(&mut self) -> PResult<&'s str> {
-        if matches!(self.language, Language::Jinja | Language::Vento) {
+        if matches!(self.language, Language::Jinja | Language::San | Language::Vento) {
             let Some((start, mut end)) = (match self.chars.peek() {
                 Some((i, '{')) => {
                     let start = *i;
@@ -736,7 +737,7 @@ impl<'s> Parser<'s> {
         let quote = self.chars.next_if(|(_, c)| *c == '"' || *c == '\'');
 
         if let Some((start, quote)) = quote {
-            let is_jinja_or_vento = matches!(self.language, Language::Jinja | Language::Vento);
+            let is_jinja_or_vento = matches!(self.language, Language::Jinja | Language::San | Language::Vento);
             let start = start + 1;
             let mut end = start;
             let mut chars_stack = vec![];
@@ -1390,13 +1391,16 @@ impl<'s> Parser<'s> {
                     Some((_, '{'))
                         if matches!(
                             self.language,
-                            Language::Vue | Language::Jinja | Language::Angular
+                            Language::Vue | Language::San | Language::Jinja | Language::Angular
                         ) =>
                     {
                         self.parse_mustache_interpolation().map(|(expr, start)| {
                             match self.language {
                                 Language::Vue => {
                                     NodeKind::VueInterpolation(VueInterpolation { expr, start })
+                                }
+                                Language::San => {
+                                    NodeKind::SanInterpolation(SanInterpolation { expr, start })
                                 }
                                 Language::Jinja => {
                                     NodeKind::JinjaInterpolation(JinjaInterpolation { expr })
@@ -2113,6 +2117,7 @@ impl<'s> Parser<'s> {
             if matches!(
                 self.language,
                 Language::Vue
+                    | Language::San
                     | Language::Svelte
                     | Language::Jinja
                     | Language::Vento
@@ -2128,7 +2133,7 @@ impl<'s> Parser<'s> {
 
         if matches!(
             self.language,
-            Language::Vue | Language::Jinja | Language::Vento | Language::Angular
+            Language::Vue | Language::San | Language::Jinja | Language::Vento | Language::Angular
         ) && first_char == '{'
             && matches!(self.chars.peek(), Some((_, '{')))
         {
@@ -2143,7 +2148,7 @@ impl<'s> Parser<'s> {
                     Language::Html => {
                         self.chars.next();
                     }
-                    Language::Vue | Language::Vento | Language::Angular => {
+                    Language::Vue | Language::San | Language::Vento | Language::Angular => {
                         let i = *i;
                         let mut chars = self.chars.clone();
                         chars.next();
@@ -2153,6 +2158,7 @@ impl<'s> Parser<'s> {
                         }
                         self.chars.next();
                     }
+
                     Language::Svelte | Language::Astro => {
                         end = *i;
                         break;
@@ -2380,6 +2386,7 @@ impl<'s> Parser<'s> {
             value,
         })
     }
+
 }
 
 fn is_tag_name_char(c: char) -> bool {

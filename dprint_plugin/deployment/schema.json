@@ -63,6 +63,11 @@
       "type": ["boolean", "null"],
       "default": null
     },
+    "san.scriptIndent": {
+      "description": "Control whether the code block in the `<script>` tag should be indented or not for San.",
+      "type": ["boolean", "null"],
+      "default": null
+    },
     "svelte.scriptIndent": {
       "description": "Control whether the code block in the `<script>` tag should be indented or not for Svelte.",
       "type": ["boolean", "null"],
@@ -85,6 +90,11 @@
     },
     "vue.styleIndent": {
       "description": "Control whether the code block in the `<style>` tag should be indented or not for Vue.",
+      "type": ["boolean", "null"],
+      "default": null
+    },
+    "san.styleIndent": {
+      "description": "Control whether the code block in the `<style>` tag should be indented or not for San.",
       "type": ["boolean", "null"],
       "default": null
     },
@@ -144,7 +154,7 @@
       "default": null
     },
     "component.selfClosing": {
-      "description": "Control whether Vue/Svelte/Astro/Angular component should be self-closed or not if it doesn't have children.",
+      "description": "Control whether Vue/San/Svelte/Astro/Angular component should be self-closed or not if it doesn't have children.",
       "type": ["boolean", "null"],
       "default": null
     },

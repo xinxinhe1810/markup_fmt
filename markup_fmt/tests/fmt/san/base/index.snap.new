@@ -1,0 +1,62 @@
+---
+source: markup_fmt/tests/fmt.rs
+assertion_line: 31
+---
+<template>
+  <div>
+    <div>
+      <span s-if="123" name="321" class="OP_LOG_BTN" data="{{123}}"></span>
+      123
+    </div>
+
+    <div
+      class="cos-name cos-name cos-name cos-name cos-name cos-name cos-name cos-name cos-name cos-name cos-name cos-name cos-name cos-name cos-name"
+    >
+      321
+    </div>
+  </div>
+</template>
+
+<script lang="ts">
+import {Component} from '@baidu/ala-util/san-component';
+import {SanOption, AlaLog, Query, UbcLog} from '@baidu/www-wise';
+
+export default class EntryComponent extends Component {
+    static trimWhitespace = 'all';
+    static components = {
+    };
+
+    static computed = {
+    };
+
+    alaLog: AlaLog;
+query: Query;
+ubcLog: UbcLog;
+
+    constructor(sanOption: SanOption, alaLog: AlaLog, query: Query, ubcLog: UbcLog) {
+        super(sanOption);
+        this.alaLog = alaLog;
+        this.query = query;
+        this.ubcLog = ubcLog;
+    }
+    injectService(inject) {
+        this.query = inject(Query);
+        this.alaLog = inject(AlaLog);
+    this.ubcLog = inject(UbcLog);
+    }
+
+    initData() {
+       return {
+
+       };
+   }
+
+    attached() {
+
+    }
+}
+</script>
+
+<style lang="less" module>
+@import (reference) 'tokens.less';
+</style>

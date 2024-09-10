@@ -80,6 +80,11 @@ pub(crate) fn resolve_config(
                 "vue.scriptIndent",
                 &mut diagnostics,
             ),
+            san_script_indent: get_nullable_value(
+                &mut config,
+                "san.scriptIndent",
+                &mut diagnostics,
+            ),
             svelte_script_indent: get_nullable_value(
                 &mut config,
                 "svelte.scriptIndent",
@@ -97,6 +102,7 @@ pub(crate) fn resolve_config(
                 &mut diagnostics,
             ),
             vue_style_indent: get_nullable_value(&mut config, "vue.styleIndent", &mut diagnostics),
+            san_style_indent: get_nullable_value(&mut config, "san.styleIndent", &mut diagnostics),
             svelte_style_indent: get_nullable_value(
                 &mut config,
                 "svelte.styleIndent",

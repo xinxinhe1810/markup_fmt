@@ -382,7 +382,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                 .unwrap_or(self.self_closing)
         } else if matches!(
             ctx.language,
-            Language::Vue | Language::Svelte | Language::Angular
+            Language::Vue | Language::San | Language::Svelte | Language::Angular
         ) && helpers::is_component(self.tag_name)
         {
             ctx.options
@@ -395,7 +395,7 @@ impl<'s> DocGen<'s> for Element<'s> {
         } else {
             self.self_closing
         };
-        let is_whitespace_sensitive = !(matches!(ctx.language, Language::Vue)
+        let is_whitespace_sensitive = !(matches!(ctx.language, Language::Vue | Language::San)
             && is_root
             && self.tag_name.eq_ignore_ascii_case("template")
             || state.in_svg)
@@ -673,6 +673,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                     matches!(
                         &child.kind,
                         NodeKind::VueInterpolation(..)
+                            | NodeKind::SanInterpolation(..)
                             | NodeKind::SvelteInterpolation(..)
                             | NodeKind::Comment(..)
                             | NodeKind::AstroExpr(..)
@@ -855,6 +856,18 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                         Cow::from(value)
                     }
                 }
+                Language::San => {
+                    if state
+                        .current_tag_name
+                        .map(|name| name.eq_ignore_ascii_case("script"))
+                        .unwrap_or_default()
+                        && self.name == "generic"
+                    {
+                        Cow::from(ctx.format_type_params(value, value_start))
+                    } else {
+                        Cow::from(value)
+                    }
+                }
                 Language::Svelte if !ctx.options.strict_svelte_attr => {
                     if let Some(expr) = value.strip_prefix('{').and_then(|s| s.strip_suffix('}')) {
                         let formatted_expr = ctx.format_general_expr(expr, value_start);
@@ -981,6 +994,7 @@ impl<'s> DocGen<'s> for NodeKind<'s> {
             }
             NodeKind::VentoTag(vento_tag) => vento_tag.doc(ctx, state),
             NodeKind::VueInterpolation(vue_interpolation) => vue_interpolation.doc(ctx, state),
+            NodeKind::SanInterpolation(san_interpolation) => san_interpolation.doc(ctx, state),
         }
     }
 }
@@ -1664,6 +1678,94 @@ impl<'s> DocGen<'s> for VueInterpolation<'s> {
     }
 }
 
+impl<'s> DocGen<'s> for SanDirective<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, _: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
+    {
+        let mut docs = Vec::with_capacity(5);
+        let mut is_v_bind = false;
+
+        match self.name {
+            "bind" => {
+                is_v_bind = true;
+                docs.push(Doc::text("s-bind"));
+            }
+            "on" => {
+                docs.push(Doc::text("s-on"));
+            }
+            name => {
+                docs.push(Doc::text(format!("s-{name}")));
+                if let Some(arg_and_modifiers) = self.arg_and_modifiers {
+                    docs.push(Doc::text(arg_and_modifiers));
+                }
+            }
+        };
+
+        if let Some((value, value_start)) = self.value {
+            let value = match self.name {
+                "for" => {
+                    use crate::config::VForDelimiterStyle;
+                    if let Some((left, right)) = value.split_once(" in ") {
+                        let delimiter = if let Some(VForDelimiterStyle::Of) =
+                            ctx.options.v_for_delimiter_style
+                        {
+                            "of"
+                        } else {
+                            "in"
+                        };
+                        format_v_for(left, delimiter, right, value_start, ctx)
+                    } else if let Some((left, right)) = value.split_once(" of ") {
+                        let delimiter = if let Some(VForDelimiterStyle::In) =
+                            ctx.options.v_for_delimiter_style
+                        {
+                            "in"
+                        } else {
+                            "of"
+                        };
+                        format_v_for(left, delimiter, right, value_start, ctx)
+                    } else {
+                        ctx.format_attr_expr(value, value_start)
+                    }
+                }
+                "#" | "slot" => ctx.format_binding(value, value_start),
+                _ => ctx.format_attr_expr(value, value_start),
+            };
+            if !(matches!(ctx.options.v_bind_same_name_short_hand, Some(true))
+                && is_v_bind
+                && matches!(self.arg_and_modifiers, Some(arg_and_modifiers) if arg_and_modifiers == value))
+            {
+                docs.push(Doc::text("="));
+                docs.push(format_attr_value(value, &ctx.options.quotes));
+            }
+        } else if matches!(ctx.options.v_bind_same_name_short_hand, Some(false)) && is_v_bind {
+            if let Some(arg_and_modifiers) = self.arg_and_modifiers {
+                docs.push(Doc::text("="));
+                docs.push(format_attr_value(arg_and_modifiers, &ctx.options.quotes));
+            }
+        }
+
+        Doc::list(docs)
+    }
+}
+
+impl<'s> DocGen<'s> for SanInterpolation<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, _: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::text("{{")
+            .append(Doc::line_or_space())
+            .concat(reflow_with_indent(
+                &ctx.format_general_expr(self.expr, self.start),
+            ))
+            .nest_with_ctx(ctx)
+            .append(Doc::line_or_space())
+            .append(Doc::text("}}"))
+            .group()
+    }
+}
+
 fn reflow_raw(s: &str) -> impl Iterator<Item = Doc<'_>> {
     itertools::intersperse(
         s.split('\n')
@@ -1919,6 +2021,7 @@ fn is_text_like(node: &Node) -> bool {
     match &node.kind {
         NodeKind::Text(..)
         | NodeKind::VueInterpolation(..)
+        | NodeKind::SanInterpolation(..)
         | NodeKind::SvelteInterpolation(..)
         | NodeKind::AstroExpr(..)
         | NodeKind::JinjaInterpolation(..)

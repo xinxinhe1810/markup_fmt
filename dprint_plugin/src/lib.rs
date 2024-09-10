@@ -40,6 +40,7 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
                 file_extensions: [
                     "html",
                     "vue",
+                    "san",
                     "svelte",
                     "astro",
                     "jinja",

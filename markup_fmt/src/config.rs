@@ -92,6 +92,11 @@ pub struct LanguageOptions {
     pub vue_script_indent: Option<bool>,
     #[cfg_attr(
         feature = "config_serde",
+        serde(rename = "san.script_indent", alias = "san.scriptIndent")
+    )]
+    pub san_script_indent: Option<bool>,
+    #[cfg_attr(
+        feature = "config_serde",
         serde(rename = "svelte.script_indent", alias = "svelte.scriptIndent")
     )]
     pub svelte_script_indent: Option<bool>,
@@ -113,6 +118,11 @@ pub struct LanguageOptions {
         serde(rename = "vue.style_indent", alias = "vue.styleIndent")
     )]
     pub vue_style_indent: Option<bool>,
+    #[cfg_attr(
+        feature = "config_serde",
+        serde(rename = "san.style_indent", alias = "san.styleIndent")
+    )]
+    pub san_style_indent: Option<bool>,
     #[cfg_attr(
         feature = "config_serde",
         serde(rename = "svelte.style_indent", alias = "svelte.styleIndent")
@@ -224,11 +234,13 @@ impl Default for LanguageOptions {
             script_indent: false,
             html_script_indent: None,
             vue_script_indent: None,
+            san_script_indent: None,
             svelte_script_indent: None,
             astro_script_indent: None,
             style_indent: false,
             html_style_indent: None,
             vue_style_indent: None,
+            san_style_indent: None,
             svelte_style_indent: None,
             astro_style_indent: None,
             closing_bracket_same_line: false,

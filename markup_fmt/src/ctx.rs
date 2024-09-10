@@ -41,6 +41,10 @@ where
                 .options
                 .vue_script_indent
                 .unwrap_or(self.options.script_indent),
+            Language::San => self
+                .options
+                .san_script_indent
+                .unwrap_or(self.options.script_indent),
             Language::Svelte => self
                 .options
                 .svelte_script_indent
@@ -62,6 +66,10 @@ where
                 .options
                 .vue_style_indent
                 .unwrap_or(self.options.style_indent),
+            Language::San => self
+                .options
+                .san_style_indent
+                .unwrap_or(self.options.style_indent),
             Language::Svelte => self
                 .options
                 .svelte_style_indent
@@ -75,7 +83,11 @@ where
 
     pub(crate) fn is_whitespace_sensitive(&self, tag_name: &str) -> bool {
         match self.language {
-            Language::Vue | Language::Svelte | Language::Astro | Language::Angular
+            Language::Vue
+            | Language::San
+            | Language::Svelte
+            | Language::Astro
+            | Language::Angular
                 if helpers::is_component(tag_name) =>
             {
                 matches!(

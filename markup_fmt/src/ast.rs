@@ -150,6 +150,7 @@ pub enum NodeKind<'s> {
     VentoInterpolation(VentoInterpolation<'s>),
     VentoTag(VentoTag<'s>),
     VueInterpolation(VueInterpolation<'s>),
+    SanInterpolation(SanInterpolation<'s>),
 }
 
 pub struct Root<'s> {
@@ -254,7 +255,18 @@ pub struct VueDirective<'s> {
     pub value: Option<(&'s str, usize)>,
 }
 
+pub struct SanDirective<'s> {
+    pub name: &'s str,
+    pub arg_and_modifiers: Option<&'s str>,
+    pub value: Option<(&'s str, usize)>,
+}
+
 pub struct VueInterpolation<'s> {
+    pub expr: &'s str,
+    pub start: usize,
+}
+
+pub struct SanInterpolation<'s> {
     pub expr: &'s str,
     pub start: usize,
 }
